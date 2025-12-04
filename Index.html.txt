@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>京都跨年之旅 Kyoto Trip</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        kyoto: {
+                            bg: '#f4f4f0',      /* 米白背景 */
+                            dark: '#2c3e50',    /* 深藍文字 */
+                            green: '#7c9473',   /* 抹茶綠 (強調色) */
+                            accent: '#cf5d3e',  /* 朱紅色 (強調/警告) */
+                            light: '#e8e8e4',   /* 淺灰分隔線 */
+                            card: '#ffffff'     /* 卡片白底 */
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* App 優化樣式 */
+        body {
+            background-color: #f4f4f0; /* 延伸頁首圖片底色 */
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        /* 隱藏滾動條但保持功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* 頁首圓弧處理 */
+        .header-curve {
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            margin-top: -30px; /* 負邊距創造重疊效果 */
+            position: relative;
+            z-index: 10;
+            background-color: #f4f4f0;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        /* 浮動導航按鈕樣式 */
+        .float-nav-btn {
+            @apply flex flex-col items-center justify-center w-14 h-14 rounded-full bg-white shadow-md text-kyoto-dark transition-all duration-300;
+        }
+        .float-nav-btn.active {
+            @apply bg-kyoto-green text-white shadow-lg transform -translate-y-1;
+        }
+        /* 新增按鈕樣式 */
+        .add-btn-float {
+            @apply fixed bottom-6 right-6 w-14 h-14 bg-kyoto-green text-white rounded-full shadow-lg flex items-center justify-center text-2xl z-50 hover:bg-opacity-90 transition-all;
+        }
+    </style>
+</head>
+<body class="text-kyoto-dark overflow-x-hidden">
+
+<div id="app" class="min-h-screen pb-20">
+
+    <header class="relative">
+        <div class="h-[250px] w-full bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1920&auto=format&fit=crop');">
+            </div>
+
+        <div class="absolute right-4 -bottom-7 z-20 flex space-x-3">
+            <button @click="currentTab = 'itinerary'" :class="['float-nav-btn', currentTab === 'itinerary' ? 'active' : '']">
+                <i class="fa-solid fa-map-location-dot text-lg"></i>
+                <span class="text-[10px] mt-1">行程</span>
+            </button>
+            <button @click="currentTab = 'info'" :class="['float-nav-btn', currentTab === 'info' ? 'active' : '']">
+                <i class="fa-solid fa-circle-info text-lg"></i>
+                <span class="text-[10px] mt-1">資訊</span>
+            </button>
+            <button @click="currentTab = 'shopping'" :class="['float-nav-btn', currentTab === 'shopping' ? 'active' : '']">
+                <i class="fa-solid fa-basket-shopping text-lg"></i>
+                <span class="text-[10px] mt-1">購物</span>
+            </button>
+            <button @click="currentTab = 'expenses'" :class="['float-nav-btn', currentTab === 'expenses' ? 'active' : '']">
+                <i class="fa-solid fa-coins text-lg"></i>
+                <span class="text-[10px] mt-1">花費</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="header-curve pt-10 px-4">
+
+        <div v-if="currentTab === 'itinerary'">
+            
+            <div class="bg-kyoto-card rounded-xl p-4 shadow-sm mb-4 flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-cloud-sun text-3xl text-kyoto-green mr-3"></i>
+                    <div>
+                        <div class="text-lg font-bold">京都</div>
+                        <div class="text-sm text-gray-500">多雲時晴</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold">8°C</div>
+                    <div class="text-xs text-gray-500">體感 5°C</div>
+                </div>
+            </div>
+
+            <div class="flex space-x-4 overflow-x-auto no-scrollbar mb-6 py-2">
+                <button v-for="(day, index) in itineraryData" :key="index" 
+                        @click="selectedDayIndex = index"
+                        :class="['flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl transition-all', 
+                                 selectedDayIndex === index ? 'bg-kyoto-green text-white shadow-md' : 'bg-kyoto-card text-kyoto-dark shadow-sm']">
+                    <span class="text-sm font-medium">{{ getDayName(day.date) }}</span>
+                    <span class="text-2xl font-bold">{{ getDayNumber(day.date) }}</span>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div v-for="(item, index) in currentDayItinerary.items" :key="item.id" class="relative">
+                    
+                    <div v-if="index > 0" class="flex items-center justify-center py-2 text-xs text-gray-500">
+                        <i :class="getTransportIcon(item.transportType)" class="mr-2"></i>
+                        <span>{{ item.travelTimeText || '計算中...' }}</span>
+                         <div class="absolute top-0 bottom-0 left-8 w-0.5 bg-kyoto-light -z-10" style="top: -10px; bottom: 50%;"></div>
+                    </div>
+                    <div v-if="index === 0 && item.type !== 'flight'" class="flex items-center justify-center py-2 text-xs text-gray-500">
+                        <i class="fa-solid fa-hotel mr-2"></i>
+                        <span>從飯店出發</span>
+                    </div>
+
+                    <div :class="['bg-kyoto-card rounded-xl shadow-sm p-4 flex flex-col relative overflow-hidden', item.type === 'flight' ? 'border-l-4 border-kyoto-accent' : 'border-l-4 border-kyoto-green']">
+                         <span class="absolute top-0 right-0 px-2 py-1 text-[10px] text-white rounded-bl-lg" 
+                              :class="item.type === 'flight' ? 'bg-kyoto-accent' : 'bg-kyoto-green'">
+                            {{ getCategoryName(item.type) }}
+                        </span>
+
+                        <div class="flex-1 cursor-pointer" @click="openGoogleMaps(item.name)">
+                            <div class="flex items-start mb-2">
+                                <div class="mr-4 text-center min-w-[50px]">
+                                    <div class="text-lg font-bold leading-tight">{{ formatTime(item.time) }}</div>
+                                    <i class="fa-solid fa-location-dot text-kyoto-green mt-2"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold mb-1">{{ item.name }}</h3>
+                                    <div class="text-sm text-gray-600 mb-2 space-y-1">
+                                        <p v-if="item.businessHours"><i class="fa-regular fa-clock mr-1 w-4"></i> {{ item.businessHours }}</p>
+                                        <p v-if="item.ticketInfo"><i class="fa-solid fa-ticket mr-1 w-4"></i> {{ item.ticketInfo }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-if="item.notes" class="bg-kyoto-bg p-2 rounded-lg text-sm text-gray-700">
+                                <span class="font-medium text-kyoto-green">Note:</span> {{ item.notes }}
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-2 pt-2 border-t border-kyoto-light text-gray-400">
+                            <button @click.stop="moveItem(index, -1)" :disabled="index === 0" class="px-2 hover:text-kyoto-green disabled:opacity-30"><i class="fa-solid fa-arrow-up"></i></button>
+                            <button @click.stop="moveItem(index, 1)" :disabled="index === currentDayItinerary.items.length - 1" class="px-2 hover:text-kyoto-green disabled:opacity-30"><i class="fa-solid fa-arrow-down"></i></button>
+                            <button @click.stop="showEditModal(item)" class="px-2 ml-2 hover:text-kyoto-dark"><i class="fa-solid fa-pen-to-square"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button @click="showAddModal = true" class="add-btn-float">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div> <div v-if="currentTab === 'info'" class="space-y-6">
+            
+            <section class="bg-kyoto-card rounded-xl p-5 shadow-sm">
+                <h2 class="text-xl font-bold mb-4 flex items-center"><i class="fa-solid fa-money-bill-transfer mr-3 text-kyoto-green"></i>匯率換算</h2>
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        <label class="text-xs text-gray-500 pl-1">日幣 (JPY)</label>
+                        <input type="number" v-model="currencyJpy" @input="calculateTwd" class="w-full bg-kyoto-bg rounde
